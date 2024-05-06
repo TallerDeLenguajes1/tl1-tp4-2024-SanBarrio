@@ -22,9 +22,14 @@ Nodo *crearListaVacia();
 Tarea crearTarea();
 void insertarNodo(Nodo **nodito, Nodo *nuevaTarea);
 Nodo *crearNodo(Tarea tarea);
+
 void mostrarLista(Nodo *nodito);
 Tarea seleccionarTarea(Nodo **nodito);
 void eliminarNodo(Nodo **nodito);
+
+Tarea filtrarId(Nodo *lista, int id);
+Tarea filtrarPalabra(Nodo *lista, char *palabraClave);
+void mostrarTarea(Tarea tarea, char * tipoTarea);
 
 int main()
 {
@@ -43,13 +48,74 @@ int main()
     printf("\n----------------- SE FINALIZÓ LA CARGA DE TAREAS -----------------");
     mostrarLista(tareasPendientes);
 
-    Tarea tareaTransferida = seleccionarTarea(&tareasPendientes);
+    seguir = 1;
 
-    // Si el ID de la tarea devuelta es distinto de -1, quiere decir que se seleccionó una tarea existente
-    if (tareaTransferida.TareaID != -1){
-        insertarNodo(&tareasRealizadas, crearNodo(tareaTransferida));
-    }
+    do
+    {
+
+        Tarea tareaTransferida = seleccionarTarea(&tareasPendientes);
+        if (tareaTransferida.TareaID != -1)
+        {
+            insertarNodo(&tareasRealizadas, crearNodo(tareaTransferida));
+        }
+        printf("¿Desea seguir transfiriendo tareas? SI(1) o NO(0):\n");
+        fflush(stdin);
+        scanf("%d", &seguir);
+    } while (seguir != 0);
     mostrarLista(tareasRealizadas);
+
+    printf("\nDesea filtrar por ID o por palabra Clave? ID(1) o Palabra Clave (2):\n");
+    scanf("%d", &seguir);
+    if(seguir==1){
+        int id;
+        printf("\nDigite el ID a buscar: ");
+        scanf("%d", &id);
+
+
+        Tarea tareaFiltrada = filtrarId(tareasPendientes, id);
+            if (tareaFiltrada.TareaID == -1) // Si el ID de la tarea es -1, quiere decir que no se encontró una tarea con ese ID en la lista
+            {
+                tareaFiltrada = filtrarId(tareasRealizadas, id);
+                if (tareaFiltrada.TareaID == -1) // Si el ID de la tarea es -1, quiere decir que no se encontró una tarea con ese ID en la lista
+                {
+                    printf("\n[!] NO se ha encontrado una tarea con el ID especificado [!]\n");
+                }
+                else
+                {
+                    mostrarTarea(tareaFiltrada, "TAREA REALIZADA");
+                }
+            }
+            else
+            {
+                mostrarTarea(tareaFiltrada, "TAREA PENDIENTE");
+            }
+    }else{
+            char *palabraClave;
+
+            palabraClave = (char *)malloc( MAX_LARGO * sizeof(char) );
+            printf("\nDigite la palabra clave a buscar: ");
+            fflush(stdin);
+
+            gets(palabraClave);
+
+            Tarea tareaFiltradaB = filtrarPalabra(tareasPendientes, palabraClave);
+            if (tareaFiltradaB.TareaID == -1) // Si el ID de la tarea es -1, quiere decir que no se encontró una tarea con ese ID en la lista
+            {
+                tareaFiltradaB = filtrarPalabra(tareasRealizadas, palabraClave);
+                if (tareaFiltradaB.TareaID == -1) // Si el ID de la tarea es -1, quiere decir que no se encontró una tarea con ese ID en la lista
+                {
+                    printf("\n[!] NO se ha encontrado una tarea con el ID especificado [!]\n");
+                }
+                else
+                {
+                    mostrarTarea(tareaFiltradaB, "TAREA REALIZADA");
+                }
+            }
+            else
+            {
+                mostrarTarea(tareaFiltradaB, "TAREA PENDIENTE");
+            }
+    } 
 
     return 0;
 }
@@ -69,7 +135,7 @@ Tarea crearTarea()
 
     nuevaTarea.Descripcion = (char *)malloc(MAX_LARGO * sizeof(char));
     printf("\nIngrese la descripcion: ");
-     fflush(stdin);
+    fflush(stdin);
     gets(nuevaTarea.Descripcion);
 
     fflush(stdin);
@@ -171,4 +237,55 @@ void eliminarNodo(Nodo **nodito)
     (*nodito) = (*nodito)->Siguiente;
     free(temp->T.Descripcion);
     free(temp);
+}
+
+Tarea filtrarId(Nodo *lista, int id)
+{
+    Tarea tareaEncontrada;
+    tareaEncontrada.TareaID = -1;
+    
+    while ( (lista != NULL) && (lista->T.TareaID != id) )
+    {
+        lista = lista->Siguiente;
+    }
+
+    if (lista != NULL)
+    {
+        tareaEncontrada.TareaID = lista->T.TareaID;
+        tareaEncontrada.Descripcion = (char *)malloc( (strlen(lista->T.Descripcion) + 1) * sizeof(char) );
+        strcpy(tareaEncontrada.Descripcion, lista->T.Descripcion);
+        tareaEncontrada.Duracion = lista->T.Duracion;
+    }
+
+    return tareaEncontrada;
+}
+
+
+Tarea filtrarPalabra(Nodo *lista, char *palabraClave)
+{
+    Tarea tareaEncontrada;
+    tareaEncontrada.TareaID = -1;
+
+    while ( (lista != NULL) && (strstr(lista->T.Descripcion, palabraClave) == NULL) )
+    {
+        lista = lista->Siguiente;
+    }
+
+    if (lista != NULL)
+    {
+        tareaEncontrada.TareaID = lista->T.TareaID;
+        tareaEncontrada.Descripcion = (char *)malloc( (strlen(lista->T.Descripcion) + 1) * sizeof(char) );
+        strcpy(tareaEncontrada.Descripcion, lista->T.Descripcion);
+        tareaEncontrada.Duracion = lista->T.Duracion;
+    }
+
+    return tareaEncontrada;
+}
+
+
+void mostrarTarea(Tarea tarea, char *tipoTarea)
+{
+    printf("\n-----------------------Tarea de ID %d (%s)-------------------", tarea.TareaID, tipoTarea);
+    printf("\nDescripcion: %s", tarea.Descripcion);
+    printf("\nDuracion: %d\n", tarea.Duracion);
 }
